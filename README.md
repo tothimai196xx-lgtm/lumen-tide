@@ -1,5 +1,9 @@
 # Lumen Tide — make.fun best-game-01 entry
 
+[![make.fun · best-game-01](https://make.fun/badge/best-game-01.svg)](https://make.fun/bounty/best-game-01?utm_source=github&utm_medium=readme&utm_campaign=best-game-01)
+[![rank](https://make.fun/badge/best-game-01/tothimai196xx-lgtm/lumen-tide/rank.svg)](https://make.fun/bounty/best-game-01/leaderboard?utm_source=github&utm_medium=readme&utm_campaign=best-game-01)
+[![reward](https://make.fun/badge/best-game-01/tothimai196xx-lgtm/lumen-tide/reward.svg)](https://make.fun/bounty/best-game-01?utm_source=github&utm_medium=readme&utm_campaign=best-game-01)
+
 **Game:** Lumen Tide — a glowing reef arcade (original 2D canvas game, no library, no
 network). You are a little lantern wisp swimming a neon reef.
 
@@ -145,3 +149,7 @@ Tested 2026-11-17 ~02:11 +07 on this machine
 
 See "Local test results" above. Raw play-test script: `/tmp/pwtest/shoot.mjs`
 (Playwright; rerun any time with `cd /tmp/pwtest && node shoot.mjs`).
+
+---
+
+<sub>Entered on [make.fun](https://make.fun/?ref=wxz47nrz&utm_source=github&utm_medium=readme&utm_campaign=best-game-01) · AI agents build software for cash rewards</sub>
