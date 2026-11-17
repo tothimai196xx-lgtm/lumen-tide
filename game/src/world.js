@@ -4,6 +4,8 @@
 // colour changes every few seconds, so the player keeps choosing what to chase. Levels climb
 // every 20 motes, the tide gets faster, and level 10 tames the tide and wins the game.
 import { FIELD, LIVES, MOTES_PER_LEVEL, MOTE, PLAYER, POWERUPS, SPAWN, URCHIN, WIN_LEVEL, MOTE_COLORS } from './config.js';
+import { levelBanner, levelBonus } from './levels.js';
+import { pickPowerupKind, powerupBanner } from './powerups.js';
 import { KIND_MOTE, KIND_POWERUP, KIND_URCHIN, burst, createMote, createPowerup, createUrchin } from './entities.js';
 
 export const EVENT_NONE = 0;
@@ -56,6 +58,7 @@ function freshState(random) {
     attuned: 'GOLD',
     attuneTimer: ATTUNE_SECONDS,
     magnetTime: 0,
+    frenzyTime: 0,
     slowTime: 0,
     time: 0,
     shake: 0,
@@ -107,7 +110,8 @@ export function createWorld(random) {
       state.combo += 1;
       state.bestCombo = Math.max(state.bestCombo, state.combo);
       const multiplier = Math.min(state.combo, MOTE.maxCombo);
-      state.score += MOTE.basePoints * multiplier;
+      const frenzy = state.frenzyTime > 0 ? 2 : 1;
+      state.score += MOTE.basePoints * multiplier * frenzy;
       state.lastCollectAttuned = true;
     } else {
       state.combo = 0;
@@ -117,6 +121,8 @@ export function createWorld(random) {
     const level = 1 + Math.floor(state.collected / MOTES_PER_LEVEL);
     if (level !== state.level) {
       state.level = level;
+      state.score += levelBonus(level);
+      setBanner(levelBanner(level), 2.4);
       return EVENT_LEVEL;
     }
     return EVENT_NONE;
@@ -153,6 +159,23 @@ export function createWorld(random) {
     } else if (item.power === 'magnet') {
       state.magnetTime = POWERUPS.magnet.seconds;
       setBanner('MAGNET — MOTES FLY TO YOU', 1.8);
+    } else if (item.power === 'frenzy') {
+      state.frenzyTime = POWERUPS.frenzy.seconds;
+      setBanner(powerupBanner('frenzy'), 1.8);
+    } else if (item.power === 'heart') {
+      state.lives = Math.min(4, state.lives + 1);
+      setBanner(powerupBanner('heart'), 1.8);
+    } else if (item.power === 'nova') {
+      let shattered = 0;
+      for (const other of state.items) {
+        if (other.kind === KIND_URCHIN && other.active) {
+          other.active = false;
+          burst(state.particles, other.x, other.y, '#b06ee8', 10, 200);
+          shattered += 1;
+        }
+      }
+      state.score += shattered * 15;
+      setBanner(powerupBanner('nova'), 1.8);
     } else {
       state.slowTime = POWERUPS.slow.seconds;
       setBanner('SLOW TIDE — EVERYTHING DRIFTS', 1.8);
@@ -175,6 +198,7 @@ export function createWorld(random) {
     if (player.invuln > 0) player.invuln -= dt;
     if (player.dashCooldown > 0) player.dashCooldown -= dt;
     if (state.magnetTime > 0) state.magnetTime -= dt;
+    if (state.frenzyTime > 0) state.frenzyTime -= dt;
     if (state.slowTime > 0) state.slowTime -= dt;
 
     // The attuned colour changes on a timer, so the best chase keeps moving.
@@ -250,7 +274,7 @@ export function createWorld(random) {
     }
     state.spawnPowerup -= dt;
     if (state.spawnPowerup <= 0) {
-      const power = createPowerup(random, random.pick(['shield', 'magnet', 'slow']));
+      const power = createPowerup(random, pickPowerupKind(random, state));
       power.baseX = power.x;
       state.items.push(power);
       state.spawnPowerup = SPAWN.powerupEvery * random.range(0.85, 1.2);

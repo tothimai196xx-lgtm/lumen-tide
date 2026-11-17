@@ -76,4 +76,7 @@ export const POWERUPS = {
   shield: { name: 'SHIELD', color: PALETTE.good, seconds: 0 },
   magnet: { name: 'MAGNET', color: PALETTE.cyan, seconds: 6 },
   slow: { name: 'SLOW TIDE', color: PALETTE.magenta, seconds: 5 },
+  frenzy: { name: 'FRENZY', color: PALETTE.gold, seconds: 8 },
+  heart: { name: 'EXTRA LIFE', color: '#ff6b81', seconds: 0 },
+  nova: { name: 'NOVA BURST', color: '#b06ee8', seconds: 0 },
 };

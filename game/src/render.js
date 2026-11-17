@@ -2,6 +2,8 @@
 // is drawn in code (gradients, glows, shapes), so the game ships no image files at all.
 import { FIELD, MOTE_COLORS, PALETTE, PLAYER } from './config.js';
 import { KIND_MOTE, KIND_POWERUP, KIND_URCHIN } from './entities.js';
+import { progressInLevel, tideName } from './levels.js';
+import { powerupGlyph } from './powerups.js';
 
 export const SCREEN_TITLE = 'title';
 export const SCREEN_PLAY = 'play';
@@ -52,7 +54,7 @@ function attunedHex(state) {
   return found ? found.hex : PALETTE.gold;
 }
 
-export function createRenderer(canvas) {
+export function createRenderer(canvas, extras = {}) {
   const ctx = canvas.getContext('2d');
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   canvas.width = FIELD.width * dpr;
@@ -66,6 +68,7 @@ export function createRenderer(canvas) {
     gradient.addColorStop(1, PALETTE.seaBottom);
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, FIELD.width, FIELD.height);
+    if (extras.backdrop) extras.backdrop.draw(ctx, state.time);
 
     // Slow god-rays from the surface.
     ctx.save();
@@ -187,7 +190,7 @@ export function createRenderer(canvas) {
     ctx.font = 'bold 20px system-ui, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const glyph = item.power === 'shield' ? '◈' : item.power === 'magnet' ? 'U' : '◷';
+    const glyph = powerupGlyph(item.power);
     ctx.fillText(glyph, item.x, item.y + bob + 1);
   }
 
@@ -263,15 +266,15 @@ export function createRenderer(canvas) {
     ctx.fillStyle = PALETTE.textDim;
     ctx.fillText(`BEST ${Math.max(best, state.score)}`, 24, 54);
     // Tide progress to the next level.
-    const inLevel = state.collected % 20;
+    const { inLevel, needed } = progressInLevel(state.collected);
     ctx.fillStyle = 'rgba(255,255,255,0.15)';
     ctx.fillRect(300, 24, 220, 10);
     ctx.fillStyle = attuned;
-    ctx.fillRect(300, 24, 220 * (inLevel / 20), 10);
+    ctx.fillRect(300, 24, 220 * (inLevel / needed), 10);
     ctx.fillStyle = PALETTE.text;
     ctx.font = 'bold 17px system-ui, sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(`LEVEL ${state.level}  ·  ${inLevel}/20 TO NEXT`, 300, 52);
+    ctx.fillText(`LEVEL ${state.level} ${tideName(state.level).toUpperCase()}  ·  ${inLevel}/${needed}`, 300, 52);
     // Attuned colour.
     ctx.textAlign = 'center';
     ctx.font = 'bold 16px system-ui, sans-serif';
@@ -292,7 +295,7 @@ export function createRenderer(canvas) {
       ctx.fillText(`COMBO ×${Math.min(state.combo, 5)}`, 1010, 34);
     }
     // Lives.
-    for (let index = 0; index < 3; index += 1) {
+    for (let index = 0; index < 4; index += 1) {
       drawHeart(ctx, 1060 + index * 34, 32, 22, index < state.lives);
     }
     // Dash cooldown + active power-ups.
@@ -303,6 +306,7 @@ export function createRenderer(canvas) {
     ctx.fillText(dashReady ? 'DASH READY [SPACE]' : 'DASH…', 1248, 56);
     let powerLine = '';
     if (state.magnetTime > 0) powerLine += `MAGNET ${Math.ceil(state.magnetTime)}s  `;
+    if (state.frenzyTime > 0) powerLine += `FRENZY ×2 ${Math.ceil(state.frenzyTime)}s  `;
     if (state.slowTime > 0) powerLine += `SLOW ${Math.ceil(state.slowTime)}s  `;
     if (state.player.shield) powerLine += 'SHIELD  ';
     if (powerLine) {
@@ -351,19 +355,23 @@ export function createRenderer(canvas) {
 
   function draw(state, screen, best, muted) {
     ctx.clearRect(0, 0, FIELD.width, FIELD.height);
+    if (extras.feedback) extras.feedback.apply(ctx);
     drawSea(state);
+    if (extras.drift) extras.drift.draw(ctx, state.time);
     for (const item of state.items) {
       if (item.kind === KIND_MOTE) drawMote(item, state);
       else if (item.kind === KIND_URCHIN) drawUrchin(item);
       else if (item.kind === KIND_POWERUP) drawPowerup(item, state);
     }
     drawParticles(state);
+    if (extras.bursts) extras.bursts.draw(ctx);
     if (screen !== SCREEN_TITLE) drawPlayer(state);
     else drawPlayer(state);
     if (state.flash > 0) {
       ctx.fillStyle = `rgba(255,60,60,${state.flash * 0.5})`;
       ctx.fillRect(0, 0, FIELD.width, FIELD.height);
     }
+    if (extras.feedback) extras.feedback.release(ctx);
 
     if (screen === SCREEN_PLAY || screen === SCREEN_PAUSED) {
       drawHud(state, best, muted);
@@ -396,8 +404,9 @@ export function createRenderer(canvas) {
       ctx.fillText('Move: mouse or WASD / arrows  ·  Dash: SPACE  ·  Pause: P  ·  Mute: M', FIELD.width / 2, 420);
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 30px system-ui, sans-serif';
-      const blink = Math.sin(state.time * 4) > -0.2;
-      if (blink) ctx.fillText('PRESS SPACE OR CLICK TO PLAY', FIELD.width / 2, 490);
+      ctx.globalAlpha = 0.75 + 0.25 * Math.sin(state.time * 3);
+      ctx.fillText('PRESS SPACE OR CLICK TO PLAY', FIELD.width / 2, 490);
+      ctx.globalAlpha = 1;
       if (best > 0) {
         ctx.fillStyle = PALETTE.gold;
         ctx.font = 'bold 22px system-ui, sans-serif';
@@ -419,6 +428,7 @@ export function createRenderer(canvas) {
         { text: 'PRESS SPACE TO KEEP PLAYING', big: true },
       ], PALETTE.gold);
     }
+    if (extras.feedback) extras.feedback.draw(ctx);
   }
 
   return { draw };

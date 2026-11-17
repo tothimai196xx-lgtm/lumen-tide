@@ -21,7 +21,11 @@ pot 1,000 USDC (1st place 400 USDC), entries close 2026-11-18 18:00 UTC. No entr
 - **Hazards:** spiked urchins — one hit costs a life (3 lives). Dash through them with
   **Space** (brief invulnerability, 1.1 s cooldown).
 - **Power-ups:** Shield (blocks one hit), Magnet (motes fly to you, 6 s), Slow Tide
-  (everything drifts slower, 5 s).
+  (everything drifts slower, 5 s), Frenzy (double points, 8 s), Extra Life (+1 life,
+  up to 4), Nova Burst (shatters every urchin on screen, 15 points each). The tide
+  deals hearts more often when you are down to your last life.
+- **Levels:** ten named tides (First Light … The Tamed Tide), each with its own
+  banner and a level-up points bonus; the HUD names the current tide.
 - **Controls:** mouse or WASD / arrow keys to swim · Space to dash · P to pause ·
   M to mute. Sound is synthesised in code (WebAudio); there are no audio files.
 - **Score/HUD:** score, best score, level + progress bar to the next level, attuned
@@ -53,6 +57,11 @@ mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts   # writes out/game, out/scr
 | `game/src/input.js` | Keyboard + mouse, edge-triggered actions |
 | `game/src/entities.js` | Factories: motes, urchins, power-ups, particles |
 | `game/src/world.js` | Rules: spawning, collisions, combo, levels, win/lose |
+| `game/src/levels.js` | The ten tides: names, banners, level-up bonus, progress |
+| `game/src/powerups.js` | The power-up deck: kinds, glyphs, weighted dealing |
+| `game/src/particles.js` | Burst layer (sparks + rings) and ambient drift (bubbles) |
+| `game/src/background.js` | Parallax reef: ridges, corals, dunes, light shafts |
+| `game/src/feedback.js` | Floating score text and screen shake |
 | `game/src/render.js` | All drawing: reef, wisp, HUD, five screens |
 | `game/src/shots.js` | Screenshot scenes (`?shot=start\|play\|end\|win`) |
 | `game/src/main.js` | Boot, fixed-step loop, screen state machine |
